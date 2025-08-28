@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { Box, keyframes } from '@mui/material';
 
 const dotAnimation = keyframes`
@@ -17,9 +16,9 @@ const dotAnimation = keyframes`
 `;
 
 /**
- * Memoized loading dots component for indicating AI response generation
+ * Loading dots component for indicating AI response generation
  */
-export const LoadingDots = memo(() => (
+export const LoadingDots = () => (
   <Box 
     sx={{ 
       display: 'inline-flex', 
@@ -46,6 +45,4 @@ export const LoadingDots = memo(() => (
       </Box>
     ))}
   </Box>
-));
-
-LoadingDots.displayName = 'LoadingDots';
+);

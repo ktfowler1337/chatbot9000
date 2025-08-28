@@ -1,8 +1,6 @@
 import type { 
   Message, 
   Conversation, 
-  CreateMessageRequest, 
-  CreateMessageResponse,
   MessageRole
 } from '../types';
 import { createErrorMessage, generateId } from '../utils/common';
@@ -231,24 +229,6 @@ export class ChatApiService {
     }
     
     return aiMessage;
-  }
-
-  /**
-   * Create a new message in a conversation (legacy compatibility)
-   */
-  async createMessage(request: CreateMessageRequest): Promise<CreateMessageResponse> {
-    const message = await this.sendMessage(request.content, request.conversationId);
-    const conversations = this.loadConversations();
-    const conversation = conversations.find(conv => conv.id === request.conversationId);
-    
-    if (!conversation) {
-      throw new Error('Conversation not found');
-    }
-    
-    return {
-      message,
-      conversation: this.toReadonlyConversation(conversation)
-    };
   }
 
   /**

@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useState, useCallback } from 'react';
 import {
   Drawer,
   List,
@@ -23,14 +23,26 @@ import {
   Close as CloseIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import type { SidebarProps } from '../types';
+import type { Conversation } from '../types';
 import { APP_CONFIG, UI_MESSAGES } from '../constants/app';
 import { getRelativeTimeString } from '../utils/date';
 import { validateConversationTitle, sanitizeInput } from '../utils/common';
 import { ConfirmationDialog } from './ConfirmationDialog';
 
+interface SidebarProps {
+  conversations: readonly Conversation[];
+  selectedId?: string;
+  onSelect: (id: string) => void;
+  onNew: () => void;
+  onClearHistory: () => void;
+  onRename: (id: string, newTitle: string) => void;
+  onDelete: (id: string) => void;
+  isLoading?: boolean;
+}
+
 /**
- * Memoized sidebar component for conversation management
+ * Memoized sidebar component - prevents re-renders when conversations list
+ * hasn't changed (important for performance with large conversation lists)
  */
 export const Sidebar = memo<SidebarProps>(({
   conversations,
@@ -47,17 +59,18 @@ export const Sidebar = memo<SidebarProps>(({
   const [clearHistoryConfirmOpen, setClearHistoryConfirmOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
-  const handleSelect = useCallback((id: string) => {
+
+  const handleSelect = (id: string) => {
     onSelect(id);
-  }, [onSelect]);
+  };
 
-  const handleNew = useCallback(() => {
+  const handleNew = () => {
     onNew();
-  }, [onNew]);
+  };
 
-  const handleClearHistory = useCallback(() => {
+  const handleClearHistory = () => {
     setClearHistoryConfirmOpen(true);
-  }, []);
+  };
 
   const handleConfirmClearHistory = useCallback(() => {
     onClearHistory();
@@ -68,10 +81,10 @@ export const Sidebar = memo<SidebarProps>(({
     setClearHistoryConfirmOpen(false);
   }, []);
 
-  const handleDeleteConversation = useCallback((id: string) => {
+  const handleDeleteConversation = (id: string) => {
     setConversationToDelete(id);
     setDeleteConfirmOpen(true);
-  }, []);
+  };
 
   const handleConfirmDelete = useCallback(() => {
     if (conversationToDelete) {
@@ -86,12 +99,12 @@ export const Sidebar = memo<SidebarProps>(({
     setDeleteConfirmOpen(false);
   }, []);
 
-  const handleStartEdit = useCallback((id: string, currentTitle: string) => {
+  const handleStartEdit = (id: string, currentTitle: string) => {
     setEditingId(id);
     setEditTitle(currentTitle);
-  }, []);
+  };
 
-  const handleSaveEdit = useCallback(() => {
+  const handleSaveEdit = () => {
     if (editingId && editTitle.trim()) {
       const sanitizedTitle = sanitizeInput(editTitle);
       if (validateConversationTitle(sanitizedTitle)) {
@@ -100,14 +113,14 @@ export const Sidebar = memo<SidebarProps>(({
         setEditTitle('');
       }
     }
-  }, [editingId, editTitle, onRename]);
+  };
 
-  const handleCancelEdit = useCallback(() => {
+  const handleCancelEdit = () => {
     setEditingId(null);
     setEditTitle('');
-  }, []);
+  };
 
-  const handleEditKeyPress = useCallback((e: React.KeyboardEvent) => {
+  const handleEditKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleSaveEdit();
@@ -115,7 +128,7 @@ export const Sidebar = memo<SidebarProps>(({
       e.preventDefault();
       handleCancelEdit();
     }
-  }, [handleSaveEdit, handleCancelEdit]);
+  };
 
   const drawer = (
     <>

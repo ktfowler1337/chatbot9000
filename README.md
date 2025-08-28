@@ -245,6 +245,15 @@ python -m pytest                           # Run tests
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
+### Third-Party Licenses
+
+This project uses several open-source libraries. See:
+
+- [NOTICE](NOTICE) - Complete attribution and license information
+- [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) - Summary table of all dependencies
+
+All dependencies use permissive licenses (MIT, Apache-2.0, BSD-3-Clause, OFL-1.1) compatible with commercial use.
+
 ---
 
 **Professional Showcase Project** - Demonstrates modern web development practices, clean architecture, and enterprise-grade code quality.

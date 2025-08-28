@@ -1,9 +1,13 @@
 import { memo } from 'react';
 import { Paper, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import type { MessageBubbleProps } from '../types';
+import type { Message } from '../types';
 import { formatTimestamp } from '../utils/date';
 import { APP_CONFIG } from '../constants/app';
+
+interface MessageBubbleProps {
+  message: Message;
+}
 
 /**
  * Memoized message bubble component for optimal rendering performance

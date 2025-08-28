@@ -23,7 +23,7 @@ interface StoredMessage {
 class LocalStorageService {
   private readonly storageKey = 'chatbot9000-conversations';
 
-  async getConversations(): Promise<readonly Conversation[]> {
+  async getConversations(): Promise<Conversation[]> {
     try {
       const stored = window.localStorage.getItem(this.storageKey);
       if (!stored) return [];
@@ -44,7 +44,7 @@ class LocalStorageService {
     }
   }
 
-  async saveConversations(conversations: readonly Conversation[]): Promise<void> {
+  async saveConversations(conversations: Conversation[]): Promise<void> {
     try {
       window.localStorage.setItem(this.storageKey, JSON.stringify(conversations));
     } catch (error) {

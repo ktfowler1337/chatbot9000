@@ -1,13 +1,30 @@
-import { useState, useCallback } from 'react';
-import { ThemeProvider, CssBaseline, Box, Alert } from '@mui/material';
+import { useState, useCallback, Suspense, lazy } from 'react';
+import { ThemeProvider, CssBaseline, Box, Alert, CircularProgress } from '@mui/material';
 import { darkTheme } from './theme/darkTheme';
-import { Sidebar } from './components/Sidebar';
-import { ChatWindow } from './components/ChatWindow';
 import { QueryProvider } from './providers/QueryProvider';
 import { useChatStore } from './store/chatStore';
 import { useAISendMessage } from './hooks/useAISendMessage';
 import { APP_CONFIG, UI_MESSAGES } from './constants/app';
 import type { Message } from './types';
+
+// Lazy load heavy components
+const Sidebar = lazy(() => import('./components/Sidebar').then(module => ({ default: module.Sidebar })));
+const ChatWindow = lazy(() => import('./components/ChatWindow').then(module => ({ default: module.ChatWindow })));
+
+/**
+ * Loading fallback component
+ */
+const LoadingFallback = () => (
+  <Box 
+    display="flex" 
+    justifyContent="center" 
+    alignItems="center" 
+    height="100vh"
+    bgcolor="background.default"
+  >
+    <CircularProgress />
+  </Box>
+);
 
 /**
  * Main application content component
@@ -135,16 +152,18 @@ function AppContent() {
           display: 'flex', 
           flexDirection: 'column' 
         }}>
-          <Sidebar
-            conversations={conversations}
-            selectedId={selectedId}
-            onSelect={handleSelectConversation}
-            onNew={handleNewChat}
-            onClearHistory={handleClearHistory}
-            onRename={handleRenameConversation}
-            onDelete={handleDeleteConversation}
-            isLoading={storeLoading}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <Sidebar
+              conversations={conversations}
+              selectedId={selectedId}
+              onSelect={handleSelectConversation}
+              onNew={handleNewChat}
+              onClearHistory={handleClearHistory}
+              onRename={handleRenameConversation}
+              onDelete={handleDeleteConversation}
+              isLoading={storeLoading}
+            />
+          </Suspense>
         </Box>
 
         {/* Main content area */}
@@ -166,12 +185,14 @@ function AppContent() {
           )}
 
           {showChatWindow ? (
-            <ChatWindow
-              messages={selectedConversation?.messages || []}
-              onSend={handleSendMessage}
-              isLoading={isLoading}
-              error={sendError?.message || null}
-            />
+            <Suspense fallback={<LoadingFallback />}>
+              <ChatWindow
+                messages={selectedConversation?.messages || []}
+                onSend={handleSendMessage}
+                isLoading={isLoading}
+                error={sendError?.message || null}
+              />
+            </Suspense>
           ) : (
             <Box
               sx={{

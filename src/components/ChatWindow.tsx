@@ -1,20 +1,27 @@
-import { memo, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Box, Alert } from '@mui/material';
 import { MessageBubble } from './MessageBubble';
 import { InputBar } from './InputBar';
 import { LoadingDots } from './LoadingDots';
-import type { ChatWindowProps } from '../types';
+import type { Message } from '../types';
 import { APP_CONFIG, UI_MESSAGES } from '../constants/app';
 
+interface ChatWindowProps {
+  messages: Message[];
+  onSend: (message: string) => void;
+  isLoading?: boolean;
+  error?: string | null;
+}
+
 /**
- * Memoized chat window component for displaying messages and handling input
+ * Chat window component for displaying messages and handling input
  */
-export const ChatWindow = memo<ChatWindowProps>(({ 
+export const ChatWindow = ({ 
   messages, 
   onSend, 
   isLoading = false,
   error = null 
-}) => {
+}: ChatWindowProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -93,6 +100,4 @@ export const ChatWindow = memo<ChatWindowProps>(({
       <InputBar onSend={handleSend} isLoading={isLoading} />
     </Box>
   );
-});
-
-ChatWindow.displayName = 'ChatWindow';
+};

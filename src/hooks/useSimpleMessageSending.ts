@@ -13,6 +13,8 @@ export const useSimpleMessageSending = (
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // useCallback is important here because this function is returned from the hook
+  // and will be used as a dependency in parent components
   const sendMessage = useCallback(async (content: string) => {
     if (!validateMessage(content)) {
       setError(new Error('Message content is invalid or too long'));

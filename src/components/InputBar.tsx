@@ -1,11 +1,17 @@
-import { memo, useRef, useState, useCallback, type KeyboardEvent } from 'react';
+import { memo, useRef, useState, type KeyboardEvent } from 'react';
 import { Paper, TextField, IconButton, CircularProgress } from '@mui/material';
 import { Send } from '@mui/icons-material';
-import type { InputBarProps } from '../types';
 import { validateMessage, sanitizeInput } from '../utils/common';
 
+interface InputBarProps {
+  onSend: (message: string) => void;
+  isLoading?: boolean;
+  placeholder?: string;
+}
+
 /**
- * Memoized input bar component for sending messages
+ * Memoized input bar component - prevents re-renders when parent state changes
+ * but props remain the same (important for typing performance)
  */
 export const InputBar = memo<InputBarProps>(({ 
   onSend, 
@@ -15,7 +21,7 @@ export const InputBar = memo<InputBarProps>(({
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     const sanitized = sanitizeInput(input);
     
     if (validateMessage(sanitized) && !isLoading) {
@@ -23,9 +29,9 @@ export const InputBar = memo<InputBarProps>(({
       onSend(sanitized);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, onSend]);
+  };
 
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -35,11 +41,11 @@ export const InputBar = memo<InputBarProps>(({
         inputRef.current?.focus();
       }, 0);
     }
-  }, [handleSend]);
+  };
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
-  }, []);
+  };
 
   const isInputValid = validateMessage(input.trim());
 
