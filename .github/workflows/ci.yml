@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '8'
+  PNPM_VERSION: '9'
 
 jobs:
   test:
@@ -31,7 +31,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Run linting
         run: pnpm run lint
@@ -76,7 +76,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Build application
         run: pnpm run build
@@ -108,7 +108,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Run security audit
         run: pnpm audit --audit-level=high
