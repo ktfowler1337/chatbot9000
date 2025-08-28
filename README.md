@@ -178,6 +178,12 @@ Admittedly I did quite a bit more than was asked.  This code needs a lot more re
 The code itself is not up to my personal standards, but it is functional and a pretty cool POC overall.
 
 ### With More Time
+- Refactor: Considerably more time cleaning up the auto-gen code
+- Theme: Ability to swap light/darkmode
+- Branding: Customized MUI theming or some other sort of design system
+- Internationalization: Allow the user to swap languages
+- Api Client: Use an auto-generated api client instead of custom queries
+- Component library: Build more shared components to increase code reusability
 - Authentication System: User accounts with cloud sync
 - Real-time Features: WebSocket for live collaboration
 - Advanced AI: Multiple providers (OpenAI, Anthropic, local models)
