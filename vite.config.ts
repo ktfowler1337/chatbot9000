@@ -18,8 +18,8 @@ export default mergeConfig(
             animations: ['framer-motion'],
             // React Query (26KB → 8KB gzipped)
             'react-query': ['@tanstack/react-query', '@tanstack/react-query-devtools'],
-            // AI/utility libraries
-            utils: ['@google/generative-ai', 'nanoid'],
+            // Utility libraries
+            utils: ['nanoid'],
           }
         }
       },
