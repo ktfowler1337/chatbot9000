@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     
     # Google AI Configuration
     google_api_key: Optional[str] = None
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.5-flash"
     
     # Database Configuration (for future use)
     database_url: Optional[str] = None
