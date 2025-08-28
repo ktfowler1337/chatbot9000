@@ -13,8 +13,6 @@ This project uses the following third-party software:
 | Emotion | MIT | https://github.com/emotion-js/emotion |
 | TanStack Query | MIT | https://github.com/TanStack/query |
 | Framer Motion | MIT | https://github.com/motiondivision/motion |
-| Google Generative AI (JS) | Apache-2.0 | https://github.com/google/generative-ai-js |
-| Roboto Font | OFL-1.1 | https://github.com/fontsource/font-files |
 | nanoid | MIT | https://github.com/ai/nanoid |
 | TypeScript | Apache-2.0 | https://github.com/microsoft/TypeScript |
 | Vite | MIT | https://github.com/vitejs/vite |
@@ -34,9 +32,8 @@ This project uses the following third-party software:
 
 ## License Summary
 
-- **MIT**: 15+ packages (most dependencies)
-- **Apache-2.0**: 3 packages (Google AI, TypeScript)
+- **MIT**: 13+ packages (most dependencies)
+- **Apache-2.0**: 2 packages (Google Generative AI Python, TypeScript)
 - **BSD-3-Clause**: 2 packages (Uvicorn, Python-dotenv)
-- **OFL-1.1**: 1 package (Roboto font)
 
 All licenses are permissive and compatible with the project's MIT license.
