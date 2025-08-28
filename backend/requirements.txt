@@ -1,0 +1,17 @@
+# Simplified LLM Proxy Dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+
+# Google Generative AI
+google-generativeai==0.3.2
+
+# Logging & Configuration
+loguru==0.7.2
+python-dotenv==1.0.0
+
+# Development (optional)
+pytest==7.4.4
+pytest-asyncio==0.23.2
