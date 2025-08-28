@@ -88,6 +88,7 @@ export interface ChatStore {
   readonly updateConversationTitle: (id: string, title: string) => Promise<void>;
   readonly deleteConversation: (id: string) => Promise<void>;
   readonly clearHistory: () => Promise<void>;
+  readonly removeMessage: (conversationId: string, messageId: string) => Promise<void>;
 }
 
 export interface SendMessageMutation {

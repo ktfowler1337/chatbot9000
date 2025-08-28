@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { nanoid } from 'nanoid';
 import type { Message } from '../types';
 import { validateMessage } from '../utils/common';
@@ -8,8 +9,11 @@ import { validateMessage } from '../utils/common';
  */
 export const useAISendMessage = (
   onUserMessage: (message: Message) => void,
-  onAIResponse: (message: Message) => void
+  onAIResponse: (message: Message) => void,
+  onRemoveMessage?: (messageId: string) => void
 ) => {
+  const currentUserMessageRef = useRef<string | null>(null);
+
   const mutation = useMutation({
     mutationFn: async (content: string): Promise<Message> => {
       // Validate input
@@ -25,6 +29,8 @@ export const useAISendMessage = (
         timestamp: new Date()
       };
       
+      // Track the current user message ID for potential rollback
+      currentUserMessageRef.current = userMessage.id;
       onUserMessage(userMessage);
 
       // Send to AI backend using React Query (this is where React Query makes sense)
@@ -56,11 +62,18 @@ export const useAISendMessage = (
       return aiMessage;
     },
     onSuccess: (aiMessage) => {
+      // Clear the tracked message since everything was successful
+      currentUserMessageRef.current = null;
       // Add AI response to conversation
       onAIResponse(aiMessage);
     },
     onError: (error) => {
       console.error('Failed to get AI response:', error);
+      // Remove the optimistically added user message if we have a way to do so
+      if (currentUserMessageRef.current && onRemoveMessage) {
+        onRemoveMessage(currentUserMessageRef.current);
+      }
+      currentUserMessageRef.current = null;
     }
   });
 

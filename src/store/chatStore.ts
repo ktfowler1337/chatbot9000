@@ -103,6 +103,29 @@ class LocalStorageService {
     window.localStorage.removeItem(this.storageKey);
   }
 
+  async removeMessageFromConversation(conversationId: string, messageId: string): Promise<Conversation | null> {
+    const conversations = await this.getConversations();
+    const conversation = conversations.find(conv => conv.id === conversationId);
+    
+    if (!conversation) {
+      return null;
+    }
+
+    const updatedMessages = conversation.messages.filter(msg => msg.id !== messageId);
+    const updatedConversation: Conversation = {
+      ...conversation,
+      messages: updatedMessages,
+      updatedAt: new Date()
+    };
+
+    const updated = conversations.map(conv => 
+      conv.id === conversationId ? updatedConversation : conv
+    );
+    
+    await this.saveConversations(updated);
+    return updatedConversation;
+  }
+
   private deduplicateMessages(messages: Message[]): Message[] {
     const seen = new Map<string, boolean>();
     const deduplicated: Message[] = [];
@@ -164,17 +187,21 @@ export const useChatStore = (): ChatStore => {
   // Update a conversation in both state and localStorage
   const updateConversation = useCallback(async (updatedConv: Conversation): Promise<void> => {
     try {
-      const conversations = await storageService.getConversations();
-      const updated = conversations.map((conv: Conversation) => 
-        conv.id === updatedConv.id ? updatedConv : conv
+      // Update localStorage
+      await storageService.saveConversations(
+        conversations.map(conv => 
+          conv.id === updatedConv.id ? updatedConv : conv
+        )
       );
-      await storageService.saveConversations(updated);
       
-      setConversations(updated);
+      // Update state
+      setConversations(prev => 
+        prev.map(conv => conv.id === updatedConv.id ? updatedConv : conv)
+      );
     } catch (err) {
       setError(createErrorMessage(err));
     }
-  }, []);
+  }, [conversations]);
 
   // Update conversation title
   const updateConversationTitle = useCallback(async (id: string, title: string): Promise<void> => {
@@ -208,6 +235,20 @@ export const useChatStore = (): ChatStore => {
     }
   }, []);
 
+  // Remove a specific message from a conversation
+  const removeMessage = useCallback(async (conversationId: string, messageId: string): Promise<void> => {
+    try {
+      const updatedConversation = await storageService.removeMessageFromConversation(conversationId, messageId);
+      if (updatedConversation) {
+        setConversations(prev => 
+          prev.map(conv => conv.id === conversationId ? updatedConversation : conv)
+        );
+      }
+    } catch (err) {
+      setError(createErrorMessage(err));
+    }
+  }, []);
+
   return {
     conversations,
     isLoading,
@@ -217,5 +258,6 @@ export const useChatStore = (): ChatStore => {
     updateConversationTitle,
     deleteConversation,
     clearHistory,
+    removeMessage,
   };
 };

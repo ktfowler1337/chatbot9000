@@ -23,7 +23,8 @@ function AppContent() {
     updateConversation,
     updateConversationTitle,
     deleteConversation,
-    clearHistory 
+    clearHistory,
+    removeMessage
   } = useChatStore();
 
   // Get the selected conversation from the conversations list (where optimistic updates happen)
@@ -55,6 +56,12 @@ function AppContent() {
           updatedAt: new Date()
         };
         await updateConversation(updatedConversation);
+      }
+    },
+    // On error - remove the failed user message
+    async (messageId: string) => {
+      if (selectedConversation) {
+        await removeMessage(selectedConversation.id, messageId);
       }
     }
   );
@@ -105,8 +112,8 @@ function AppContent() {
     await deleteConversation(id);
   }, [deleteConversation, selectedId]);
 
-  // Combine error states
-  const error = storeError || (sendError ? sendError.message : null);
+  // Combine error states - only store errors, not send errors (those are handled in ChatWindow)
+  const error = storeError;
   const isLoading = storeLoading || isSending;
 
   // Show chat window if we have a selected conversation
