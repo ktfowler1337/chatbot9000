@@ -83,10 +83,11 @@ export interface ChatStore {
   readonly conversations: readonly Conversation[];
   readonly isLoading: boolean;
   readonly error: string | null;
-  readonly updateConversation: (conversation: Conversation) => void;
-  readonly updateConversationTitle: (id: string, title: string) => void;
-  readonly deleteConversation: (id: string) => void;
-  readonly clearHistory: () => void;
+  readonly createConversation: (initialMessage?: string) => Promise<Conversation>;
+  readonly updateConversation: (conversation: Conversation) => Promise<void>;
+  readonly updateConversationTitle: (id: string, title: string) => Promise<void>;
+  readonly deleteConversation: (id: string) => Promise<void>;
+  readonly clearHistory: () => Promise<void>;
 }
 
 export interface SendMessageMutation {

@@ -5,8 +5,9 @@ import { Sidebar } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { QueryProvider } from './providers/QueryProvider';
 import { useChatStore } from './store/chatStore';
-import { useSendMessage, useCreateConversation } from './hooks/useChat';
+import { useAISendMessage } from './hooks/useAISendMessage';
 import { APP_CONFIG, UI_MESSAGES } from './constants/app';
+import type { Message } from './types';
 
 /**
  * Main application content component
@@ -18,76 +19,95 @@ function AppContent() {
     conversations, 
     isLoading: storeLoading, 
     error: storeError,
+    createConversation,
+    updateConversation,
     updateConversationTitle,
     deleteConversation,
     clearHistory 
   } = useChatStore();
-  
-  const { 
-    mutate: sendChatMessage, 
-    isPending: isSending,
-    error: sendError 
-  } = useSendMessage(selectedId || '');
-
-  const { 
-    mutate: createConversation, 
-    isPending: isCreating 
-  } = useCreateConversation();
 
   // Get the selected conversation from the conversations list (where optimistic updates happen)
   const selectedConversation = selectedId ? conversations.find(conv => conv.id === selectedId) : undefined;
 
-  const handleNewChat = useCallback(() => {
-    createConversation(undefined, {
-      onSuccess: (newConversation) => {
-        setSelectedId(newConversation.id);
-      },
-      onError: (error) => {
-        console.error('Failed to create new conversation:', error);
+  // AI message sending with React Query for backend calls
+  const { 
+    sendMessage: sendToAI, 
+    isPending: isSending,
+    error: sendError 
+  } = useAISendMessage(
+    // On user message - add to conversation
+    async (userMessage: Message) => {
+      if (selectedConversation) {
+        const updatedConversation = {
+          ...selectedConversation,
+          messages: [...selectedConversation.messages, userMessage],
+          updatedAt: new Date()
+        };
+        await updateConversation(updatedConversation);
       }
-    });
+    },
+    // On AI response - add to conversation
+    async (aiMessage: Message) => {
+      if (selectedConversation) {
+        const updatedConversation = {
+          ...selectedConversation,
+          messages: [...selectedConversation.messages, aiMessage],
+          updatedAt: new Date()
+        };
+        await updateConversation(updatedConversation);
+      }
+    }
+  );
+
+  const handleNewChat = useCallback(async () => {
+    try {
+      const newConversation = await createConversation();
+      setSelectedId(newConversation.id);
+    } catch (error) {
+      console.error('Failed to create new conversation:', error);
+    }
   }, [createConversation]);
 
   const handleSelectConversation = useCallback((id: string) => {
     setSelectedId(id);
   }, []);
 
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback(async (content: string) => {
     if (!selectedId || !selectedConversation) {
       // If no conversation is selected, create a new one with this message
-      createConversation(content, {
-        onSuccess: (newConversation) => {
-          setSelectedId(newConversation.id);
-        },
-        onError: (error) => {
-          console.error('Failed to create conversation with message:', error);
-        }
-      });
+      try {
+        const newConversation = await createConversation(content);
+        setSelectedId(newConversation.id);
+        // Send the message to AI after creating conversation
+        sendToAI(content);
+      } catch (error) {
+        console.error('Failed to create conversation with message:', error);
+      }
       return;
     }
-    sendChatMessage(content);
-  }, [selectedId, selectedConversation, sendChatMessage, createConversation]);
+    sendToAI(content);
+  }, [selectedId, selectedConversation, sendToAI, createConversation]);
 
-  const handleClearHistory = useCallback(() => {
+  const handleClearHistory = useCallback(async () => {
     setSelectedId(undefined);
-    clearHistory();
+    await clearHistory();
   }, [clearHistory]);
 
-  const handleRenameConversation = useCallback((id: string, newTitle: string) => {
-    updateConversationTitle(id, newTitle);
+  const handleRenameConversation = useCallback(async (id: string, newTitle: string) => {
+    await updateConversationTitle(id, newTitle);
   }, [updateConversationTitle]);
 
-  const handleDeleteConversation = useCallback((id: string) => {
+  const handleDeleteConversation = useCallback(async (id: string) => {
     // If the deleted conversation is currently selected, clear selection
     if (selectedId === id) {
       setSelectedId(undefined);
     }
-    deleteConversation(id);
+    await deleteConversation(id);
   }, [deleteConversation, selectedId]);
 
   // Combine error states
   const error = storeError || (sendError ? sendError.message : null);
-  const isLoading = storeLoading || isSending || isCreating;
+  const isLoading = storeLoading || isSending;
 
   // Show chat window if we have a selected conversation
   const showChatWindow = !!selectedConversation;

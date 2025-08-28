@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Conversation, ChatStore, Message } from '../types';
+import type { Conversation, Message } from '../types';
 import { createErrorMessage, generateId } from '../utils/common';
 
 interface StoredConversation {
@@ -18,14 +18,14 @@ interface StoredMessage {
 }
 
 /**
- * Simple localStorage operations without React Query overhead
+ * Direct localStorage operations without API service abstraction
  */
-class LocalStorageService {
+class LocalChatStorage {
   private readonly storageKey = 'chatbot9000-conversations';
 
   async getConversations(): Promise<readonly Conversation[]> {
     try {
-      const stored = window.localStorage.getItem(this.storageKey);
+      const stored = localStorage.getItem(this.storageKey);
       if (!stored) return [];
       
       const conversations = JSON.parse(stored) as StoredConversation[];
@@ -46,7 +46,7 @@ class LocalStorageService {
 
   async saveConversations(conversations: readonly Conversation[]): Promise<void> {
     try {
-      window.localStorage.setItem(this.storageKey, JSON.stringify(conversations));
+      localStorage.setItem(this.storageKey, JSON.stringify(conversations));
     } catch (error) {
       console.error('Failed to save conversations:', error);
       throw error;
@@ -71,24 +71,11 @@ class LocalStorageService {
     return conversation;
   }
 
-  async updateConversationTitle(id: string, title: string): Promise<Conversation> {
+  async updateConversation(updatedConversation: Conversation): Promise<Conversation> {
     const conversations = await this.getConversations();
-    const conversation = conversations.find(conv => conv.id === id);
-    
-    if (!conversation) {
-      throw new Error('Conversation not found');
-    }
-    
-    const updatedConversation: Conversation = {
-      ...conversation,
-      title: title.trim(),
-      updatedAt: new Date()
-    };
-
     const updated = conversations.map(conv => 
-      conv.id === id ? updatedConversation : conv
+      conv.id === updatedConversation.id ? updatedConversation : conv
     );
-    
     await this.saveConversations(updated);
     return updatedConversation;
   }
@@ -100,7 +87,7 @@ class LocalStorageService {
   }
 
   async clearConversations(): Promise<void> {
-    window.localStorage.removeItem(this.storageKey);
+    localStorage.removeItem(this.storageKey);
   }
 
   private deduplicateMessages(messages: Message[]): Message[] {
@@ -119,24 +106,24 @@ class LocalStorageService {
   }
 }
 
-const storageService = new LocalStorageService();
+const storage = new LocalChatStorage();
 
 /**
- * Simplified chat store using React state for localStorage operations
- * No React Query overhead for local data management
+ * Simple, efficient chat store using only React state + localStorage
+ * No React Query overhead for local operations
  */
-export const useChatStore = (): ChatStore => {
+export const useLocalChatStore = () => {
   const [conversations, setConversations] = useState<readonly Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load conversations from localStorage on mount
+  // Load conversations on mount
   useEffect(() => {
     const loadConversations = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const loadedConversations = await storageService.getConversations();
+        const loadedConversations = await storage.getConversations();
         setConversations(loadedConversations);
       } catch (err) {
         setError(createErrorMessage(err));
@@ -151,7 +138,7 @@ export const useChatStore = (): ChatStore => {
   // Create a new conversation
   const createConversation = useCallback(async (initialMessage?: string): Promise<Conversation> => {
     try {
-      const newConversation = await storageService.createConversation(initialMessage);
+      const newConversation = await storage.createConversation(initialMessage);
       setConversations(prev => [newConversation, ...prev]);
       return newConversation;
     } catch (err) {
@@ -161,37 +148,40 @@ export const useChatStore = (): ChatStore => {
     }
   }, []);
 
-  // Update a conversation in both state and localStorage
-  const updateConversation = useCallback(async (updatedConv: Conversation): Promise<void> => {
+  // Add or update a conversation
+  const updateConversation = useCallback(async (updatedConv: Conversation) => {
     try {
-      const conversations = await storageService.getConversations();
-      const updated = conversations.map((conv: Conversation) => 
-        conv.id === updatedConv.id ? updatedConv : conv
+      await storage.updateConversation(updatedConv);
+      setConversations(prev => 
+        prev.map(conv => conv.id === updatedConv.id ? updatedConv : conv)
       );
-      await storageService.saveConversations(updated);
-      
-      setConversations(updated);
     } catch (err) {
       setError(createErrorMessage(err));
     }
   }, []);
 
   // Update conversation title
-  const updateConversationTitle = useCallback(async (id: string, title: string): Promise<void> => {
+  const updateConversationTitle = useCallback(async (id: string, title: string) => {
     try {
-      const updatedConversation = await storageService.updateConversationTitle(id, title);
-      setConversations(prev => 
-        prev.map(conv => conv.id === id ? updatedConversation : conv)
-      );
+      const conversation = conversations.find(conv => conv.id === id);
+      if (!conversation) throw new Error('Conversation not found');
+
+      const updatedConversation: Conversation = {
+        ...conversation,
+        title: title.trim(),
+        updatedAt: new Date()
+      };
+
+      await updateConversation(updatedConversation);
     } catch (err) {
       setError(createErrorMessage(err));
     }
-  }, []);
+  }, [conversations, updateConversation]);
 
   // Delete a conversation
-  const deleteConversation = useCallback(async (id: string): Promise<void> => {
+  const deleteConversation = useCallback(async (id: string) => {
     try {
-      await storageService.deleteConversation(id);
+      await storage.deleteConversation(id);
       setConversations(prev => prev.filter(conv => conv.id !== id));
     } catch (err) {
       setError(createErrorMessage(err));
@@ -199,14 +189,32 @@ export const useChatStore = (): ChatStore => {
   }, []);
 
   // Clear all conversations
-  const clearHistory = useCallback(async (): Promise<void> => {
+  const clearHistory = useCallback(async () => {
     try {
-      await storageService.clearConversations();
+      await storage.clearConversations();
       setConversations([]);
     } catch (err) {
       setError(createErrorMessage(err));
     }
   }, []);
+
+  // Add a message to a conversation
+  const addMessageToConversation = useCallback(async (conversationId: string, message: Message) => {
+    try {
+      const conversation = conversations.find(conv => conv.id === conversationId);
+      if (!conversation) throw new Error('Conversation not found');
+
+      const updatedConversation: Conversation = {
+        ...conversation,
+        messages: [...conversation.messages, message],
+        updatedAt: new Date()
+      };
+
+      await updateConversation(updatedConversation);
+    } catch (err) {
+      setError(createErrorMessage(err));
+    }
+  }, [conversations, updateConversation]);
 
   return {
     conversations,
@@ -217,5 +225,6 @@ export const useChatStore = (): ChatStore => {
     updateConversationTitle,
     deleteConversation,
     clearHistory,
+    addMessageToConversation,
   };
 };
