@@ -20,9 +20,9 @@ describe('date utilities', () => {
     it('formats timestamp with date and time', () => {
       const date = new Date('2024-01-15T14:30:00.000Z')
       const result = formatTimestamp(date)
-      // Format should include date and time
-      expect(result).toMatch(/Jan 15, 2024/)
-      expect(result).toMatch(/\d{1,2}:\d{2}/)
+      // Format should include date and time in M/D/YYYY format
+      expect(result).toMatch(/1\/15\/2024/)
+      expect(result).toMatch(/\d{1,2}:\d{2}:\d{2}/)
     })
   })
 

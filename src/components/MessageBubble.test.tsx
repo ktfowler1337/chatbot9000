@@ -12,9 +12,11 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
-// Mock the date utility
+// Mock the date utility to match the actual format (1/1/2025, 12:00:00 PM)
 vi.mock('../utils/date', () => ({
-  formatTimestamp: vi.fn((date: Date) => date.toLocaleString()),
+  formatTimestamp: vi.fn((date: Date) => {
+    return date.toLocaleString('en-US');
+  }),
 }));
 
 describe('MessageBubble', () => {
@@ -31,8 +33,8 @@ describe('MessageBubble', () => {
     render(<MessageBubble message={message} />);
     
     expect(screen.getByText('Hello from user')).toBeInTheDocument();
-    // Use a partial match for timestamp since the exact format might vary
-    expect(screen.getByText(/2025-01-01/)).toBeInTheDocument();
+    // Look for the formatted date that includes "1/1/2025"
+    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
   });
 
   it('renders assistant message with correct styling', () => {
@@ -40,7 +42,7 @@ describe('MessageBubble', () => {
     render(<MessageBubble message={message} />);
     
     expect(screen.getByText('Hello from assistant')).toBeInTheDocument();
-    expect(screen.getByText(/2025-01-01/)).toBeInTheDocument();
+    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
   });
 
   it('displays multiline content correctly', () => {
@@ -79,10 +81,10 @@ describe('MessageBubble', () => {
     const assistantMessage = createMessage({ role: 'assistant' });
     
     const { rerender } = render(<MessageBubble message={userMessage} />);
-    expect(screen.getByText(/2025-01-01/)).toBeInTheDocument();
+    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
 
     rerender(<MessageBubble message={assistantMessage} />);
-    expect(screen.getByText(/2025-01-01/)).toBeInTheDocument();
+    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
   });
 
   it('handles empty message content', () => {
@@ -90,7 +92,7 @@ describe('MessageBubble', () => {
     render(<MessageBubble message={message} />);
     
     // Should still render the timestamp even with empty content
-    expect(screen.getByText(/2025-01-01/)).toBeInTheDocument();
+    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
   });
 
   it('handles special characters in message content', () => {
