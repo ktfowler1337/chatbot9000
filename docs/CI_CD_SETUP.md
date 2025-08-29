@@ -6,7 +6,7 @@ This repository is protected by automated testing and quality checks.
 
 All pull requests to `main` must pass:
 
-- ✅ **Tests** - All 53 unit tests must pass
+- ✅ **Tests** - All 135 unit tests must pass
 - ✅ **Linting** - Code must follow ESLint rules  
 - ✅ **Type Checking** - TypeScript compilation must succeed
 - ✅ **Build** - Application must build successfully
@@ -60,7 +60,7 @@ npm run build
 - **Branches:** 80% minimum
 - **Statements:** 80% minimum
 
-Current coverage: **54.59%** (component tests only)
+Current coverage: **84.49%** (comprehensive test coverage)
 
 ## 🔧 Workflow Files
 

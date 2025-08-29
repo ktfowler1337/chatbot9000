@@ -1,38 +1,9 @@
 """
 Core utilities and helpers for the LLM proxy server
 """
-import logging
-import time
-import hashlib
 from typing import Any, Dict, Optional
 from datetime import datetime, timezone
 from loguru import logger
-
-
-def setup_logging(log_level: str = "INFO") -> None:
-    """Configure logging for the application"""
-    logger.remove()  # Remove default handler
-    logger.add(
-        "logs/llm_proxy.log",
-        rotation="1 day",
-        retention="30 days",
-        level=log_level,
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}",
-        backtrace=True,
-        diagnose=True,
-    )
-    logger.add(
-        lambda msg: print(msg, end=""),
-        level=log_level,
-        format="{time:HH:mm:ss} | {level} | {message}",
-        colorize=True,
-    )
-
-
-def generate_correlation_id() -> str:
-    """Generate a unique correlation ID for request tracking"""
-    timestamp = str(time.time())
-    return hashlib.md5(timestamp.encode()).hexdigest()[:8]
 
 
 def utc_now() -> datetime:
@@ -95,10 +66,3 @@ class LLMError(AppError):
     def __init__(self, message: str, provider: str = "gemini"):
         super().__init__(message, f"LLM_ERROR_{provider.upper()}", 500)
         self.provider = provider
-
-
-class RateLimitError(AppError):
-    """Rate limiting error"""
-    
-    def __init__(self, message: str = "Rate limit exceeded"):
-        super().__init__(message, "RATE_LIMIT_EXCEEDED", 429)
