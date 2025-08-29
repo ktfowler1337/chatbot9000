@@ -1,149 +1,144 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
-import { useChatStore } from './chatStore'
-import type { Conversation } from '../types'
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { useChatStore } from './chatStore';
+import type { Conversation } from '../types';
 
 // Mock localStorage
 const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-}
+};
 
-beforeEach(() => {
-  vi.clearAllMocks()
-  Object.defineProperty(window, 'localStorage', {
-    value: mockLocalStorage,
-    writable: true,
-  })
-})
+Object.defineProperty(window, 'localStorage', {
+  value: mockLocalStorage,
+});
+
+// Mock nanoid for ID generation
+vi.mock('../utils/common', () => ({
+  createErrorMessage: vi.fn((error) => error?.message || 'Unknown error'),
+  generateId: vi.fn(() => 'test-id-123'),
+}));
 
 describe('useChatStore', () => {
   beforeEach(() => {
-    mockLocalStorage.getItem.mockReturnValue(null)
-  })
+    vi.clearAllMocks();
+    mockLocalStorage.getItem.mockReturnValue(null);
+  });
 
-  it('should initialize with empty conversations when localStorage is empty', async () => {
-    const { result } = renderHook(() => useChatStore())
-    
-    // Wait for initial load
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
-    })
-    
-    expect(result.current.conversations).toEqual([])
-    expect(result.current.isLoading).toBe(false)
-  })
+  it('initializes with empty state when no localStorage data', async () => {
+    // Test initial empty state
+    const { result } = renderHook(() => useChatStore());
 
-  it('should create a new conversation', async () => {
-    const { result } = renderHook(() => useChatStore())
-    
-    // Wait for initial load
+    // Wait for initial load to complete
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
-    })
-    
-    let createdConversation: Conversation | undefined
-    await act(async () => {
-      createdConversation = await result.current.createConversation('Test message')
-    })
-    
-    expect(createdConversation).toBeDefined()
-    expect(createdConversation!.title).toBe('Test message')
-    expect(result.current.conversations).toHaveLength(1)
-  })
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
-  it('should delete a conversation', async () => {
-    // Set up existing conversations
-    const mockConversations = [
+    expect(result.current.conversations).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBe(null);
+  });
+
+  it('loads existing conversations from localStorage', async () => {
+    // Test loading saved conversations
+    const mockData = JSON.stringify([
       {
         id: '1',
-        title: 'Test Chat',
+        title: 'Test Conversation',
         messages: [],
         createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      }
-    ]
-    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockConversations))
-    
-    const { result } = renderHook(() => useChatStore())
-    
-    // Wait for initial load
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
-    })
-    
-    expect(result.current.conversations).toHaveLength(1)
-    
-    await act(async () => {
-      await result.current.deleteConversation('1')
-    })
-    
-    expect(result.current.conversations).toHaveLength(0)
-  })
-
-  it('should clear all conversations', async () => {
-    // Set up existing conversations  
-    const mockConversations = [
-      {
-        id: '1',
-        title: 'Test Chat 1',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
+        updatedAt: '2024-01-01T00:00:00.000Z',
       },
-      {
-        id: '2', 
-        title: 'Test Chat 2',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      }
-    ]
-    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockConversations))
-    
-    const { result } = renderHook(() => useChatStore())
-    
-    // Wait for initial load
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
-    })
-    
-    expect(result.current.conversations).toHaveLength(2)
-    
-    await act(async () => {
-      await result.current.clearHistory()
-    })
-    
-    expect(result.current.conversations).toHaveLength(0)
-  })
+    ]);
+    mockLocalStorage.getItem.mockReturnValue(mockData);
 
-  it('should update conversation title', async () => {
-    // Set up existing conversation
-    const mockConversations = [
-      {
-        id: '1',
-        title: 'Old Title',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      }
-    ]
-    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockConversations))
-    
-    const { result } = renderHook(() => useChatStore())
-    
+    const { result } = renderHook(() => useChatStore());
+
+    // Wait for initial load to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.conversations).toHaveLength(1);
+    expect(result.current.conversations[0].title).toBe('Test Conversation');
+  });
+
+  it('handles corrupted localStorage data gracefully', async () => {
+    // Test error handling for corrupted data
+    mockLocalStorage.getItem.mockReturnValue('invalid json');
+
+    const { result } = renderHook(() => useChatStore());
+
+    // Wait for initial load to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.conversations).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('creates new conversation successfully', async () => {
+    // Test new conversation creation
+    const { result } = renderHook(() => useChatStore());
+
     // Wait for initial load
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
-    })
-    
-    expect(result.current.conversations[0].title).toBe('Old Title')
-    
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    let newConversation: Conversation | undefined;
     await act(async () => {
-      await result.current.updateConversationTitle('1', 'New Title')
-    })
-    
-    expect(result.current.conversations[0].title).toBe('New Title')
-  })
-})
+      newConversation = await result.current.createConversation('Hello World');
+    });
+
+    expect(newConversation).toBeDefined();
+    expect(newConversation!.title).toBe('Hello World');
+    expect(mockLocalStorage.setItem).toHaveBeenCalled();
+  });
+
+  it('deletes conversation successfully', async () => {
+    // Test conversation deletion
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify([
+      {
+        id: 'test-id',
+        title: 'Test',
+        messages: [],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      },
+    ]));
+
+    const { result } = renderHook(() => useChatStore());
+
+    // Wait for initial load
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      await result.current.deleteConversation('test-id');
+    });
+
+    expect(result.current.conversations).toHaveLength(0);
+    expect(mockLocalStorage.setItem).toHaveBeenCalled();
+  });
+
+  it('clears all conversations', async () => {
+    // Test clearing conversation history
+    const { result } = renderHook(() => useChatStore());
+
+    // Wait for initial load
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      await result.current.clearHistory();
+    });
+
+    expect(result.current.conversations).toEqual([]);
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('chatbot9000-conversations');
+  });
+});

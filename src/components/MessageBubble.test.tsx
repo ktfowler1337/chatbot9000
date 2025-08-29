@@ -1,111 +1,146 @@
-import { describe, it, expect, vi } from 'vitest';
-import { screen } from '@testing-library/react';
-import { render } from '../test/test-utils';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { MessageBubble } from './MessageBubble';
 import type { Message } from '../types';
 
-// Mock framer-motion to avoid animation issues
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => 
-      <div {...props}>{children}</div>,
-  },
-}));
-
-// Mock the date utility to match the actual format (1/1/2025, 12:00:00 PM)
-vi.mock('../utils/date', () => ({
-  formatTimestamp: vi.fn((date: Date) => {
-    return date.toLocaleString('en-US');
-  }),
-}));
-
 describe('MessageBubble', () => {
-  const createMessage = (overrides: Partial<Message> = {}): Message => ({
-    id: 'test-id',
-    content: 'Test message content',
+  const userMessage: Message = {
+    id: '1',
+    content: 'Hello world',
     role: 'user',
-    timestamp: new Date('2025-01-01T12:00:00Z'),
-    ...overrides,
+    timestamp: new Date('2025-01-15T10:30:00Z'),
+  };
+
+  const assistantMessage: Message = {
+    id: '2',
+    content: 'Hello! How can I help you?',
+    role: 'assistant',
+    timestamp: new Date('2025-01-15T10:31:00Z'),
+  };
+
+  it('renders user message with correct content', () => {
+    render(<MessageBubble message={userMessage} />);
+    
+    expect(screen.getByText('Hello world')).toBeInTheDocument();
   });
 
-  it('renders user message with correct styling', () => {
-    const message = createMessage({ role: 'user', content: 'Hello from user' });
-    render(<MessageBubble message={message} />);
+  it('renders assistant message with correct content', () => {
+    render(<MessageBubble message={assistantMessage} />);
     
-    expect(screen.getByText('Hello from user')).toBeInTheDocument();
-    // Look for the formatted date that includes "1/1/2025"
-    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
+    expect(screen.getByText('Hello! How can I help you?')).toBeInTheDocument();
   });
 
-  it('renders assistant message with correct styling', () => {
-    const message = createMessage({ role: 'assistant', content: 'Hello from assistant' });
-    render(<MessageBubble message={message} />);
+  it('displays timestamp for messages', () => {
+    render(<MessageBubble message={userMessage} />);
     
-    expect(screen.getByText('Hello from assistant')).toBeInTheDocument();
-    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
+    // Should show formatted timestamp
+    expect(screen.getByText(/1\/15\/2025/)).toBeInTheDocument();
   });
 
-  it('displays multiline content correctly', () => {
-    const message = createMessage({ content: 'Line 1\nLine 2\nLine 3' });
-    render(<MessageBubble message={message} />);
+  it('handles multiline content correctly', () => {
+    const multilineMessage: Message = {
+      id: '3',
+      content: 'Line 1\nLine 2\nLine 3',
+      role: 'user',
+      timestamp: new Date('2025-01-15T10:30:00Z'),
+    };
+
+    render(<MessageBubble message={multilineMessage} />);
     
-    expect(screen.getByText(/Line 1.*Line 2.*Line 3/s)).toBeInTheDocument();
+    // Check that the content is rendered (text might be split by whitespace handling)
+    expect(screen.getByText(/Line 1/)).toBeInTheDocument();
+    expect(screen.getByText(/Line 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Line 3/)).toBeInTheDocument();
   });
 
-  it('displays code blocks correctly', () => {
-    const message = createMessage({ content: 'Here is some `inline code` in the message' });
-    render(<MessageBubble message={message} />);
+  it('handles long content that might need word breaking', () => {
+    const longMessage: Message = {
+      id: '4',
+      content: 'ThisIsAVeryLongWordWithoutSpacesThatShouldBreakProperly',
+      role: 'user',
+      timestamp: new Date('2025-01-15T10:30:00Z'),
+    };
+
+    render(<MessageBubble message={longMessage} />);
     
-    expect(screen.getByText('Here is some `inline code` in the message')).toBeInTheDocument();
+    expect(screen.getByText(longMessage.content)).toBeInTheDocument();
   });
 
-  it('displays code blocks with pre tags correctly', () => {
-    const message = createMessage({ 
-      content: 'Here is a code block:\n```\nfunction test() {\n  return true;\n}\n```' 
-    });
-    render(<MessageBubble message={message} />);
+  it('renders code snippets in content', () => {
+    const codeMessage: Message = {
+      id: '5',
+      content: 'Here is some `inline code` and more text',
+      role: 'assistant',
+      timestamp: new Date('2025-01-15T10:30:00Z'),
+    };
+
+    render(<MessageBubble message={codeMessage} />);
     
-    expect(screen.getByText(/Here is a code block:/)).toBeInTheDocument();
+    expect(screen.getByText('Here is some `inline code` and more text')).toBeInTheDocument();
   });
 
-  it('handles very long messages without breaking layout', () => {
-    const longMessage = 'A'.repeat(1000);
-    const message = createMessage({ content: longMessage });
-    render(<MessageBubble message={message} />);
+  it('handles empty content gracefully', () => {
+    const emptyMessage: Message = {
+      id: '6',
+      content: '',
+      role: 'user',
+      timestamp: new Date('2025-01-15T10:30:00Z'),
+    };
+
+    render(<MessageBubble message={emptyMessage} />);
     
-    expect(screen.getByText(longMessage)).toBeInTheDocument();
+    // Should still render the component structure with timestamp
+    expect(screen.getByText(/1\/15\/2025/)).toBeInTheDocument();
   });
 
-  it('displays timestamps for both user and assistant messages', () => {
-    const userMessage = createMessage({ role: 'user' });
-    const assistantMessage = createMessage({ role: 'assistant' });
-    
+  it('displays different roles distinctly', () => {
     const { rerender } = render(<MessageBubble message={userMessage} />);
-    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
-
+    
+    // Get the container element for user message
+    const userContainer = screen.getByText('Hello world').closest('div');
+    expect(userContainer).toBeInTheDocument();
+    
+    // Rerender with assistant message
     rerender(<MessageBubble message={assistantMessage} />);
-    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
+    
+    const assistantContainer = screen.getByText('Hello! How can I help you?').closest('div');
+    expect(assistantContainer).toBeInTheDocument();
+    
+    // Both should be rendered differently (this tests component structure exists)
+    expect(screen.getByText('Hello! How can I help you?')).toBeInTheDocument();
   });
 
-  it('handles empty message content', () => {
-    const message = createMessage({ content: '' });
-    render(<MessageBubble message={message} />);
+  it('handles special characters in content', () => {
+    const specialMessage: Message = {
+      id: '7',
+      content: 'Special chars: @#$%^&*()[]{}|\\:";\'<>?,./~`',
+      role: 'user',
+      timestamp: new Date('2025-01-15T10:30:00Z'),
+    };
+
+    render(<MessageBubble message={specialMessage} />);
     
-    // Should still render the timestamp even with empty content
-    expect(screen.getByText(/1\/1\/2025/)).toBeInTheDocument();
+    expect(screen.getByText(specialMessage.content)).toBeInTheDocument();
   });
 
-  it('handles special characters in message content', () => {
-    const message = createMessage({ content: '!@#$%^&*()_+-=[]{}|;\':",./<>?' });
-    render(<MessageBubble message={message} />);
+  it('renders with valid message ID', () => {
+    render(<MessageBubble message={userMessage} />);
     
-    expect(screen.getByText('!@#$%^&*()_+-=[]{}|;\':",./<>?')).toBeInTheDocument();
+    // Should render without throwing errors when provided valid message object
+    expect(screen.getByText('Hello world')).toBeInTheDocument();
+    expect(screen.getByText(/1\/15\/2025/)).toBeInTheDocument();
   });
 
-  it('handles unicode and emoji characters', () => {
-    const message = createMessage({ content: '🎉 Hello! 你好 🌟' });
-    render(<MessageBubble message={message} />);
+  it('handles unicode characters', () => {
+    const unicodeMessage: Message = {
+      id: '8',
+      content: 'Unicode: 🚀 ☕ 💻 中文 русский العربية',
+      role: 'assistant',
+      timestamp: new Date('2025-01-15T10:30:00Z'),
+    };
+
+    render(<MessageBubble message={unicodeMessage} />);
     
-    expect(screen.getByText('🎉 Hello! 你好 🌟')).toBeInTheDocument();
+    expect(screen.getByText(unicodeMessage.content)).toBeInTheDocument();
   });
 });

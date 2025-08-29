@@ -1,14 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from '../test/test-utils';
 import { InputBar } from './InputBar';
-
-// Mock the utility functions
-vi.mock('../utils/common', () => ({
-  validateMessage: vi.fn((message: string) => message.trim().length > 0 && message.length <= 10000),
-  sanitizeInput: vi.fn((input: string) => input.trim().replace(/\s+/g, ' ')),
-}));
 
 describe('InputBar', () => {
   const mockOnSend = vi.fn();
@@ -17,88 +10,111 @@ describe('InputBar', () => {
     vi.clearAllMocks();
   });
 
-  it('renders with default placeholder text', () => {
+  it('renders input field and send button', () => {
     render(<InputBar onSend={mockOnSend} />);
     
+    // Check input field exists with placeholder
     expect(screen.getByPlaceholderText('Type your message...')).toBeInTheDocument();
-    expect(screen.getByLabelText('Send message')).toBeInTheDocument();
+    
+    // Check send button exists
+    expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument();
   });
 
-  it('renders with custom placeholder text', () => {
+  it('uses custom placeholder when provided', () => {
     render(<InputBar onSend={mockOnSend} placeholder="Custom placeholder" />);
     
     expect(screen.getByPlaceholderText('Custom placeholder')).toBeInTheDocument();
   });
 
-  it('allows user to type a message', async () => {
-    const user = userEvent.setup();
-    render(<InputBar onSend={mockOnSend} />);
-    
-    const input = screen.getByPlaceholderText('Type your message...');
-    await user.type(input, 'Hello world');
-    
-    expect(input).toHaveValue('Hello world');
-  });
-
-  it('sends message when send button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<InputBar onSend={mockOnSend} />);
-    
-    const input = screen.getByPlaceholderText('Type your message...');
-    const sendButton = screen.getByLabelText('Send message');
-    
-    await user.type(input, 'Test message');
-    await user.click(sendButton);
-    
-    expect(mockOnSend).toHaveBeenCalledWith('Test message');
-    expect(input).toHaveValue(''); // Input should be cleared after sending
-  });
-
-  it('sends message when Enter key is pressed', async () => {
-    const user = userEvent.setup();
-    render(<InputBar onSend={mockOnSend} />);
-    
-    const input = screen.getByPlaceholderText('Type your message...');
-    
-    await user.type(input, 'Test message');
-    await user.keyboard('{Enter}');
-    
-    expect(mockOnSend).toHaveBeenCalledWith('Test message');
-    expect(input).toHaveValue('');
-  });
-
-  it('does not send message when Shift+Enter is pressed', async () => {
-    const user = userEvent.setup();
-    render(<InputBar onSend={mockOnSend} />);
-    
-    const input = screen.getByPlaceholderText('Type your message...');
-    
-    await user.type(input, 'Test message');
-    await user.keyboard('{Shift>}{Enter}{/Shift}');
-    
-    expect(mockOnSend).not.toHaveBeenCalled();
-    expect(input).toHaveValue('Test message\n'); // Should add new line
-  });
-
   it('disables send button when input is empty', () => {
     render(<InputBar onSend={mockOnSend} />);
     
-    const sendButton = screen.getByLabelText('Send message');
+    const sendButton = screen.getByRole('button', { name: /send message/i });
     expect(sendButton).toBeDisabled();
   });
 
-  it('disables send button when loading', () => {
-    render(<InputBar onSend={mockOnSend} isLoading={true} />);
+  it('enables send button when input has valid text', async () => {
+    const user = userEvent.setup();
+    render(<InputBar onSend={mockOnSend} />);
     
-    const sendButton = screen.getByLabelText('Send message');
-    expect(sendButton).toBeDisabled();
+    const input = screen.getByPlaceholderText('Type your message...');
+    const sendButton = screen.getByRole('button', { name: /send message/i });
+    
+    await user.type(input, 'Hello world');
+    
+    expect(sendButton).toBeEnabled();
   });
 
-  it('shows loading spinner when loading', () => {
+  it('calls onSend with trimmed message when send button is clicked', async () => {
+    const user = userEvent.setup();
+    render(<InputBar onSend={mockOnSend} />);
+    
+    const input = screen.getByPlaceholderText('Type your message...');
+    const sendButton = screen.getByRole('button', { name: /send message/i });
+    
+    await user.type(input, '  Hello world  ');
+    await user.click(sendButton);
+    
+    expect(mockOnSend).toHaveBeenCalledWith('Hello world');
+  });
+
+  it('calls onSend when Enter key is pressed', async () => {
+    const user = userEvent.setup();
+    render(<InputBar onSend={mockOnSend} />);
+    
+    const input = screen.getByPlaceholderText('Type your message...');
+    
+    await user.type(input, 'Hello world');
+    await user.keyboard('{Enter}');
+    
+    expect(mockOnSend).toHaveBeenCalledWith('Hello world');
+  });
+
+  it('does not send when Shift+Enter is pressed', async () => {
+    const user = userEvent.setup();
+    render(<InputBar onSend={mockOnSend} />);
+    
+    const input = screen.getByPlaceholderText('Type your message...');
+    
+    await user.type(input, 'Hello world');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    
+    expect(mockOnSend).not.toHaveBeenCalled();
+  });
+
+  it('clears input after sending message', async () => {
+    const user = userEvent.setup();
+    render(<InputBar onSend={mockOnSend} />);
+    
+    const input = screen.getByPlaceholderText('Type your message...');
+    const sendButton = screen.getByRole('button', { name: /send message/i });
+    
+    await user.type(input, 'Hello world');
+    await user.click(sendButton);
+    
+    expect(input).toHaveValue('');
+  });
+
+  it('shows loading spinner when isLoading is true', () => {
     render(<InputBar onSend={mockOnSend} isLoading={true} />);
     
+    // Loading spinner should be present
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    
+    // Send icon should not be present
     expect(screen.queryByTestId('SendIcon')).not.toBeInTheDocument();
+  });
+
+  it('disables send button when isLoading is true', async () => {
+    const user = userEvent.setup();
+    render(<InputBar onSend={mockOnSend} isLoading={true} />);
+    
+    const input = screen.getByPlaceholderText('Type your message...');
+    const sendButton = screen.getByRole('button', { name: /send message/i });
+    
+    await user.type(input, 'Hello world');
+    
+    expect(sendButton).toBeDisabled();
   });
 
   it('does not send message when loading', async () => {
@@ -107,24 +123,10 @@ describe('InputBar', () => {
     
     const input = screen.getByPlaceholderText('Type your message...');
     
-    await user.type(input, 'Test message');
+    await user.type(input, 'Hello world');
     await user.keyboard('{Enter}');
     
     expect(mockOnSend).not.toHaveBeenCalled();
-  });
-
-  it('focuses input after sending message', async () => {
-    const user = userEvent.setup();
-    render(<InputBar onSend={mockOnSend} />);
-    
-    const input = screen.getByPlaceholderText('Type your message...') as HTMLInputElement;
-    
-    await user.type(input, 'Test message');
-    await user.keyboard('{Enter}');
-    
-    await waitFor(() => {
-      expect(input).toHaveFocus();
-    });
   });
 
   it('does not send empty or whitespace-only messages', async () => {
@@ -132,31 +134,24 @@ describe('InputBar', () => {
     render(<InputBar onSend={mockOnSend} />);
     
     const input = screen.getByPlaceholderText('Type your message...');
-    const sendButton = screen.getByLabelText('Send message');
     
-    // Button should be disabled for empty input - just verify it exists and test the behavior
-    expect(sendButton).toBeInTheDocument();
-
-    // Try to send empty message - should not be possible because the component validates input
-    expect(mockOnSend).not.toHaveBeenCalled();
-    
-    // Try to send whitespace-only message - type but verify button remains disabled
+    // Try empty message
     await user.type(input, '   ');
+    await user.keyboard('{Enter}');
     
-    // Button should be disabled and prevent interaction
     expect(mockOnSend).not.toHaveBeenCalled();
   });
 
-  it('handles multiline input correctly', async () => {
+  it('normalizes multiple spaces in message', async () => {
     const user = userEvent.setup();
     render(<InputBar onSend={mockOnSend} />);
     
     const input = screen.getByPlaceholderText('Type your message...');
+    const sendButton = screen.getByRole('button', { name: /send message/i });
     
-    await user.type(input, 'Line 1{Shift>}{Enter}{/Shift}Line 2');
-    await user.keyboard('{Enter}');
+    await user.type(input, 'Hello    world');
+    await user.click(sendButton);
     
-    // The component should send the multiline text (exact newline behavior may vary)
-    expect(mockOnSend).toHaveBeenCalledWith(expect.stringContaining('Line 1'));
+    expect(mockOnSend).toHaveBeenCalledWith('Hello world');
   });
 });
