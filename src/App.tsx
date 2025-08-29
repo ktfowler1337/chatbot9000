@@ -16,11 +16,13 @@ const ChatWindow = lazy(() => import('./components/ChatWindow').then(module => (
  */
 const LoadingFallback = () => (
   <Box 
-    display="flex" 
-    justifyContent="center" 
-    alignItems="center" 
-    height="100vh"
-    bgcolor="background.default"
+    sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      bgcolor: 'background.default'
+    }}
   >
     <CircularProgress />
   </Box>
@@ -138,19 +140,9 @@ function AppContent() {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Box sx={{ 
-        display: 'flex', 
-        width: '100vw', 
-        height: '100vh', 
-        overflow: 'hidden' 
-      }}>
+      <Box sx={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
         {/* Sidebar */}
-        <Box sx={{ 
-          width: APP_CONFIG.SIDEBAR_WIDTH, 
-          flexShrink: 0, 
-          display: 'flex', 
-          flexDirection: 'column' 
-        }}>
+        <Box sx={{ width: APP_CONFIG.SIDEBAR_WIDTH, flexShrink: 0 }}>
           <Suspense fallback={<LoadingFallback />}>
             <Sidebar
               conversations={conversations}
@@ -171,13 +163,7 @@ function AppContent() {
           {error && (
             <Alert 
               severity="error" 
-              sx={{ 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                right: 0, 
-                zIndex: 1000 
-              }}
+              sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}
             >
               {error}
             </Alert>

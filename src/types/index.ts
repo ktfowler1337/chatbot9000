@@ -20,19 +20,6 @@ export interface Conversation {
 }
 
 /**
- * Storage related types
- */
-export interface StoredConversation extends Omit<Conversation, 'createdAt' | 'updatedAt' | 'messages'> {
-  createdAt: string;
-  updatedAt: string;
-  messages: StoredMessage[];
-}
-
-export interface StoredMessage extends Omit<Message, 'timestamp'> {
-  timestamp: string;
-}
-
-/**
  * Hook return types
  */
 export interface ChatStore {
@@ -42,7 +29,7 @@ export interface ChatStore {
   createConversation: (initialMessage?: string) => Promise<Conversation>;
   updateConversation: (conversation: Conversation) => Promise<void>;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
-  deleteConversation: (id: string) => Promise<void>;
+    deleteConversation: (id: string) => Promise<void>;
   clearHistory: () => Promise<void>;
   removeMessage: (conversationId: string, messageId: string) => Promise<void>;
 }
