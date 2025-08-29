@@ -11,27 +11,33 @@ vi.mock('./components/ChatWindow', () => ({
   ChatWindow: () => <div data-testid="chat-window">Mocked ChatWindow</div>
 }));
 
-// Mock the chat store
-vi.mock('./store/chatStore', () => ({
-  useChatStore: () => ({
-    conversations: [],
-    isLoading: false,
-    error: null,
-    createConversation: vi.fn(),
-    updateConversation: vi.fn(),
-    updateConversationTitle: vi.fn(),
-    deleteConversation: vi.fn(),
-    clearHistory: vi.fn(),
-    removeMessage: vi.fn(),
-  })
+// Mock ErrorBoundary
+vi.mock('./components/ErrorBoundary', () => ({
+  ErrorBoundary: ({ children }: { children: React.ReactNode }) => <div data-testid="error-boundary">{children}</div>
 }));
 
-// Mock the AI hook
-vi.mock('./hooks/useAISendMessage', () => ({
-  useAISendMessage: () => ({
-    sendMessage: vi.fn(),
-    isPending: false,
+// Mock ChatLayout
+vi.mock('./components/ChatLayout', () => ({
+  ChatLayout: ({ children }: { children: React.ReactNode }) => <div data-testid="chat-layout">{children}</div>
+}));
+
+// Mock the conversation manager hook
+vi.mock('./hooks/useConversationManager', () => ({
+  useConversationManager: () => ({
+    conversations: [],
+    selectedId: undefined,
+    selectedConversation: undefined,
+    isLoading: false,
     error: null,
+    sendError: null,
+    showChatWindow: false,
+    storeLoading: false,
+    handleNewChat: vi.fn(),
+    handleSelectConversation: vi.fn(),
+    handleSendMessage: vi.fn(),
+    handleClearHistory: vi.fn(),
+    handleRenameConversation: vi.fn(),
+    handleDeleteConversation: vi.fn(),
   })
 }));
 

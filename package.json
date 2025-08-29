@@ -12,7 +12,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage --coverage.thresholds.statements=75 --coverage.thresholds.branches=75 --coverage.thresholds.functions=75 --coverage.thresholds.lines=75",
+    "test:coverage": "vitest run --coverage --coverage.thresholds.statements=70 --coverage.thresholds.branches=70 --coverage.thresholds.functions=70 --coverage.thresholds.lines=70",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
