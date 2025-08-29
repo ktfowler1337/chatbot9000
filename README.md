@@ -57,14 +57,29 @@ Frontend (React + TypeScript)     Backend (FastAPI)
 ```text
 chatbot9000/
 ├── src/                    # React Frontend
-│   ├── components/         # UI Components  
+│   ├── api/               # API client and requests
+│   ├── components/        # UI Components
+│   │   ├── sidebar/       # Sidebar-specific components
+│   │   ├── ChatLayout.tsx # Main layout component
+│   │   ├── ChatWindow.tsx # Chat conversation display
+│   │   ├── InputBar.tsx   # Message input component
+│   │   └── ...           # Other UI components
 │   ├── hooks/             # Custom React hooks
-│   ├── store/             # State management
-│   └── types/             # TypeScript definitions
+│   ├── store/             # State management (Zustand)
+│   ├── types/             # TypeScript definitions
+│   ├── utils/             # Utility functions
+│   ├── constants/         # App configuration
+│   ├── providers/         # React context providers
+│   └── theme/             # Material-UI theming
 ├── backend/app/           # FastAPI Backend
 │   ├── routers/           # API endpoints
-│   ├── services/          # AI integration
-│   └── core/              # Configuration
+│   ├── services/          # AI integration services
+│   ├── models/            # Data models
+│   ├── core/              # Configuration & settings
+│   └── main.py           # Application entry point
+├── tests/                 # Backend tests
+├── docs/                  # Documentation
+└── scripts/              # Build and deployment scripts
 ```
 
 ## 🔧 API Endpoints
