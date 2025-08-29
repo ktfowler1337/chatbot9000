@@ -4,7 +4,6 @@ LLM Service for handling Google Generative AI interactions
 import asyncio
 import time
 from typing import List, Optional, Dict, Any
-from datetime import datetime
 
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
