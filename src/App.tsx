@@ -5,7 +5,7 @@ import { QueryProvider } from './providers/QueryProvider';
 import { useChatStore } from './store/chatStore';
 import { useAISendMessage } from './hooks/useAISendMessage';
 import { APP_CONFIG, UI_MESSAGES } from './constants/app';
-import type { Message } from './types';
+import type { Conversation, Message } from './types';
 
 // Lazy load heavy components
 const Sidebar = lazy(() => import('./components/Sidebar').then(module => ({ default: module.Sidebar })));
@@ -25,6 +25,21 @@ const LoadingFallback = () => (
     <CircularProgress />
   </Box>
 );
+
+const addToConversation = async (
+  message: Message, 
+  selectedConversation: Conversation | undefined, 
+  updateConversation: (conv: Conversation) => Promise<void>
+) => {
+  if (selectedConversation) {
+    const updatedConversation = {
+      ...selectedConversation,
+      messages: [...selectedConversation.messages, message],
+      updatedAt: new Date()
+    };
+    await updateConversation(updatedConversation);
+  }
+};
 
 /**
  * Main application content component
@@ -53,27 +68,11 @@ function AppContent() {
     isPending: isSending,
     error: sendError 
   } = useAISendMessage(
-    // On user message - add to conversation
     async (userMessage: Message) => {
-      if (selectedConversation) {
-        const updatedConversation = {
-          ...selectedConversation,
-          messages: [...selectedConversation.messages, userMessage],
-          updatedAt: new Date()
-        };
-        await updateConversation(updatedConversation);
-      }
+      await addToConversation(userMessage, selectedConversation, updateConversation);
     },
-    // On AI response - add to conversation
     async (aiMessage: Message) => {
-      if (selectedConversation) {
-        const updatedConversation = {
-          ...selectedConversation,
-          messages: [...selectedConversation.messages, aiMessage],
-          updatedAt: new Date()
-        };
-        await updateConversation(updatedConversation);
-      }
+      await addToConversation(aiMessage, selectedConversation, updateConversation);
     },
     // On error - remove the failed user message
     async (messageId: string) => {

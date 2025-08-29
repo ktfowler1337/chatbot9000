@@ -61,10 +61,12 @@ async def detailed_health_check():
     try:
         # Check LLM service
         try:
-            llm_healthy = await llm_service.health_check()
+            llm_health_result = await llm_service.health_check()
+            llm_healthy = llm_health_result.get("status") == "healthy"
             health_status["components"]["llm_service"] = {
                 "status": "healthy" if llm_healthy else "unhealthy",
-                "message": "Google Generative AI service is accessible" if llm_healthy else "Google Generative AI service is not accessible"
+                "message": "Google Generative AI service is accessible" if llm_healthy else "Google Generative AI service is not accessible",
+                "details": llm_health_result
             }
             if not llm_healthy:
                 overall_healthy = False

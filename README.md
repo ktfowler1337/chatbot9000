@@ -27,8 +27,10 @@ cd chatbot9000
 
 # Backend setup
 cd backend
+python -m venv venv
+venv\Scripts\activate  # Windows (use `source venv/bin/activate` on macOS/Linux)
 pip install -r requirements.txt
-export GOOGLE_API_KEY="your-api-key-here"
+$env:GOOGLE_API_KEY="your-api-key-here"  # Windows PowerShell (use `export GOOGLE_API_KEY="your-api-key-here"` on macOS/Linux)
 python -m uvicorn app.main:app --reload --port 8000
 
 # Frontend setup (new terminal)
@@ -234,11 +236,14 @@ pnpm dev          # Development server
 pnpm build        # Production build  
 pnpm preview      # Preview build
 pnpm lint         # Code quality
+pnpm test         # Run 135 tests
 
-# Backend
+# Backend (with virtual environment)
 cd backend
-python -m uvicorn app.main:app --reload    # Development server
-python -m pytest                           # Run tests
+venv\Scripts\activate                           # Activate venv (Windows)
+python -m uvicorn app.main:app --reload        # Development server
+python -m pytest                               # Run tests (none currently)
+deactivate                                      # Deactivate venv when done
 ```
 
 ## 📄 License

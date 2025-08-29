@@ -11,24 +11,74 @@ A lightweight FastAPI proxy service for Google Generative AI. Completely statele
 
 ## Quick Start
 
-1. **Install & Configure**
+### Prerequisites
+- Python 3.13+
+- [Google AI API key](https://makersuite.google.com/app/apikey)
+
+### Development Setup with Virtual Environment
+
+1. **Create and activate virtual environment:**
    ```bash
    cd backend
-   pip install -r requirements.txt
-   export GOOGLE_API_KEY="your-api-key-here"  # Get from Google AI Studio
+   
+   # Create virtual environment
+   python -m venv venv
+   
+   # Activate virtual environment
+   # Windows (PowerShell)
+   venv\Scripts\activate
+   
+   # Windows (Command Prompt)
+   venv\Scripts\activate.bat
+   
+   # macOS/Linux (bash/zsh)
+   source venv/bin/activate
    ```
 
-2. **Run Server**
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set environment variables:**
+   ```bash
+   # Windows (PowerShell)
+   $env:GOOGLE_API_KEY="your-api-key-here"
+   
+   # Windows (Command Prompt)
+   set GOOGLE_API_KEY=your-api-key-here
+   
+   # macOS/Linux (bash/zsh)
+   export GOOGLE_API_KEY="your-api-key-here"
+   ```
+
+4. **Run the development server:**
    ```bash
    python -m uvicorn app.main:app --reload --port 8000
    ```
 
-3. **Test**
+5. **Test the API:**
    ```bash
    curl -X POST http://localhost:8000/api/v1/chat \
      -H "Content-Type: application/json" \
      -d '{"message": "Hello!"}'
    ```
+
+### Running Tests
+
+Currently, the backend has no test files. To run tests when they are available:
+```bash
+python -m pytest
+```
+
+### Deactivating Virtual Environment
+
+When you're done working, deactivate the virtual environment:
+```bash
+deactivate
+```
+
+**Note:** Always activate the virtual environment before working on the backend to ensure dependency isolation.
 
 ## API Endpoints
 

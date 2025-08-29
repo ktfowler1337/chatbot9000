@@ -145,8 +145,7 @@ class LocalStorageService {
 const storageService = new LocalStorageService();
 
 /**
- * Simplified chat store using React state for localStorage operations
- * No React Query overhead for local data management
+ * ChatStore
  */
 export const useChatStore = (): ChatStore => {
   const [conversations, setConversations] = useState<readonly Conversation[]>([]);

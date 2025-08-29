@@ -62,6 +62,10 @@ async def chat_endpoint(request: ChatRequest) -> ChatResponse:
             processing_time_ms=processing_time
         )
         
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (they have the correct status codes)
+        raise
+        
     except ValidationError as e:
         logger.warning(f"Validation error in chat endpoint: {e.message}")
         raise HTTPException(
