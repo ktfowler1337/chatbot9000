@@ -177,20 +177,27 @@ chatbot9000/
 ## If you had more time, what would you do differently, and how would you expand the functionality?
 
 Admittedly I did quite a bit more than was asked.  This code needs a lot more reviewing and refactoring to cleanup what the AI (Claude Sonnet 4) generated.
-The code itself is not up to my personal standards, but it is functional and a pretty cool POC overall.
+The code itself is not up to my personal standards, but it is functional and a pretty cool POC overall. 
+
+### Refactoring/TODOs I deem out of scope for now
+- Add playwright tests
+- decrease prop drilling as result of coupling of the large useConversationManager hook
+- leverage something like useLocalStorage from useHooks package, or something like that to decrease custom spun code on the persistence side
+- revisit unit tests, they are purely auto-generated right now.  Likely some oddities in there.
+- backend was auto-gen, have not reviewed or touched it.  It "just works" right now, and this is mostly a frontend showcase I'm okay with that
+- revisit error handling
 
 ### With More Time
-- Refactor: Considerably more time cleaning up the auto-gen code
 - Theme: Ability to swap light/darkmode
 - Branding: Customized MUI theming or some other sort of design system
 - Internationalization: Allow the user to swap languages
 - Api Client: Use an auto-generated api client instead of custom queries
 - Component library: Build more shared components to increase code reusability
 - Authentication System: User accounts with cloud sync
-- Real-time Features: WebSocket for live collaboration
 - Advanced AI: Multiple providers (OpenAI, Anthropic, local models)
 - Mobile Apps: React Native with shared business logic
 - Enterprise Features: SSO, audit logs, admin panel
+- Error reporting / tracking
 
 ### Architectural Improvements
 - Backend Database: PostgreSQL for persistent storage
@@ -221,6 +228,7 @@ The code itself is not up to my personal standards, but it is functional and a p
 - Testing Utils: Component testing utilities
 - CLI Tools: Project scaffolding and deployment scripts
 - IDE Integration: VS Code extensions and snippets
+- CI/CD pipeline: see ci.yml and github config.  main is protected and can't merge with tests and coverage passing
 
 ### Accessibility
 - Screen Reader: Full ARIA support and keyboard navigation
