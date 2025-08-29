@@ -197,9 +197,9 @@ The code itself is not up to my personal standards, but it is functional and a p
 ### Refactoring/TODOs I deem out of scope for now
 - Add playwright tests
 - decrease prop drilling as result of coupling of the large useConversationManager hook
-- leverage something like useLocalStorage from useHooks package, or something like that to decrease custom spun code on the persistence side
+- leverage something like useLocalStorage from useHooks package, or something like that to decrease custom code on the persistence side
 - revisit unit tests, they are purely auto-generated right now.  Likely some oddities in there.
-- backend was auto-gen, have not reviewed or touched it.  It "just works" right now, and this is mostly a frontend showcase I'm okay with that
+- Backend was auto-generated and has not been reviewed or modified. It "just works" right now, and since this is mostly a frontend showcase, I'm okay with that.
 - revisit error handling
 
 ### With More Time
@@ -243,7 +243,7 @@ The code itself is not up to my personal standards, but it is functional and a p
 - Testing Utils: Component testing utilities
 - CLI Tools: Project scaffolding and deployment scripts
 - IDE Integration: VS Code extensions and snippets
-- CI/CD pipeline: see ci.yml and github config.  main is protected and can't merge with tests and coverage passing
+- CI/CD pipeline: see ci.yml and GitHub config. Main branch is protected and requires tests and coverage to pass before merging.
 
 ### Accessibility
 - Screen Reader: Full ARIA support and keyboard navigation
