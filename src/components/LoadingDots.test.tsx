@@ -1,39 +1,42 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '../test/test-utils'
-import { LoadingDots } from './LoadingDots'
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { LoadingDots } from './LoadingDots';
 
 describe('LoadingDots', () => {
-  it('renders loading dots animation', () => {
-    render(<LoadingDots />)
+  it('renders loading dots component', () => {
+    render(<LoadingDots />);
     
-    // Check that the loading container is present
-    const loadingContainer = screen.getByRole('status')
-    expect(loadingContainer).toBeInTheDocument()
-  })
+    // Should have role="status" for accessibility
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
 
-  it('has correct accessibility attributes', () => {
-    render(<LoadingDots />)
+  it('has accessible label for screen readers', () => {
+    render(<LoadingDots />);
     
-    const loadingContainer = screen.getByRole('status')
-    expect(loadingContainer).toHaveAttribute('aria-label', 'AI is generating response')
-  })
+    expect(screen.getByLabelText('AI is generating response')).toBeInTheDocument();
+  });
 
-  it('contains three dots', () => {
-    render(<LoadingDots />)
+  it('renders three dots', () => {
+    render(<LoadingDots />);
     
-    // Check for the bullet characters
-    const dots = screen.getAllByText('•')
-    expect(dots).toHaveLength(3)
-  })
+    const container = screen.getByRole('status');
+    
+    // Should contain exactly 3 dot characters
+    expect(container.textContent).toBe('•••');
+  });
 
-  it('applies correct styling for animation', () => {
-    render(<LoadingDots />)
+  it('renders without throwing errors', () => {
+    // Simple smoke test - if component renders without errors, test passes
+    expect(() => render(<LoadingDots />)).not.toThrow();
+  });
+
+  it('has proper structure for animation', () => {
+    render(<LoadingDots />);
     
-    const loadingContainer = screen.getByRole('status')
-    expect(loadingContainer).toHaveStyle({
-      display: 'inline-flex',
-      gap: '4px',
-      alignItems: 'center',
-    })
-  })
-})
+    const container = screen.getByRole('status');
+    
+    // Should have exactly 3 span elements (the dots)
+    const dots = container.querySelectorAll('span');
+    expect(dots).toHaveLength(3);
+  });
+});

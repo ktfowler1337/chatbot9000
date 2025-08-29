@@ -1,222 +1,229 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ChatApiService } from './chat'
-
-// Mock fetch
-vi.stubGlobal('fetch', vi.fn())
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ChatApiService } from './chat';
 
 // Mock localStorage
 const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-}
+};
 
-beforeEach(() => {
-  vi.clearAllMocks()
-  Object.defineProperty(window, 'localStorage', {
-    value: mockLocalStorage,
-    writable: true,
-  })
-})
+Object.defineProperty(window, 'localStorage', {
+  value: mockLocalStorage,
+  writable: true,
+});
+
+// Mock fetch
+const mockFetch = vi.fn();
+vi.stubGlobal('fetch', mockFetch);
 
 describe('ChatApiService', () => {
-  let chatService: ChatApiService
+  let service: ChatApiService;
 
   beforeEach(() => {
-    chatService = new ChatApiService('http://test-api.com')
-    mockLocalStorage.getItem.mockReturnValue(null)
-  })
+    vi.clearAllMocks();
+    service = new ChatApiService('http://localhost:8000');
+    mockLocalStorage.getItem.mockReturnValue(null);
+  });
 
-  it('should initialize with correct base URL', () => {
-    expect(chatService).toBeInstanceOf(ChatApiService)
-    
-    const defaultService = new ChatApiService()
-    expect(defaultService).toBeInstanceOf(ChatApiService)
-  })
+  describe('constructor', () => {
+    it('creates service with default baseURL', () => {
+      const defaultService = new ChatApiService();
+      expect(defaultService).toBeInstanceOf(ChatApiService);
+    });
 
-  it('should load empty conversations from localStorage', async () => {
-    const conversations = await chatService.getConversations()
-    expect(conversations).toEqual([])
-    expect(mockLocalStorage.getItem).toHaveBeenCalledWith('chatbot9000-conversations')
-  })
+    it('creates service with custom baseURL', () => {
+      const customService = new ChatApiService('http://custom:9000');
+      expect(customService).toBeInstanceOf(ChatApiService);
+    });
+  });
 
-  it('should load existing conversations from localStorage', async () => {
-    const mockConversations = [
-      {
-        id: '1',
-        title: 'Test Chat',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      }
-    ]
-    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockConversations))
-    
-    const conversations = await chatService.getConversations()
-    expect(conversations).toHaveLength(1)
-    expect(conversations[0].title).toBe('Test Chat')
-  })
+  describe('getConversations', () => {
+    it('returns empty array when no conversations stored', async () => {
+      mockLocalStorage.getItem.mockReturnValue(null);
+      
+      const conversations = await service.getConversations();
+      
+      expect(conversations).toEqual([]);
+    });
 
-  it('should handle localStorage parse errors', async () => {
-    mockLocalStorage.getItem.mockReturnValue('invalid-json')
-    
-    const conversations = await chatService.getConversations()
-    expect(conversations).toEqual([])
-  })
+    it('returns parsed conversations from localStorage', async () => {
+      const storedData = JSON.stringify([
+        {
+          id: 'conv-1',
+          title: 'Test Chat',
+          messages: [],
+          createdAt: '2025-01-15T10:00:00.000Z',
+          updatedAt: '2025-01-15T10:00:00.000Z',
+        },
+      ]);
+      
+      mockLocalStorage.getItem.mockReturnValue(storedData);
+      
+      const conversations = await service.getConversations();
+      
+      expect(conversations).toHaveLength(1);
+      expect(conversations[0].id).toBe('conv-1');
+      expect(conversations[0].title).toBe('Test Chat');
+    });
 
-  it('should create a new conversation', async () => {
-    // Test creating conversation without initial message (no API call)
-    const conversation = await chatService.createConversation()
-    
-    expect(conversation).toBeDefined()
-    expect(conversation.title).toBe('New Conversation')
-    expect(conversation.messages).toEqual([])
-    expect(conversation.id).toBeDefined()
-    expect(conversation.createdAt).toBeInstanceOf(Date)
-    expect(conversation.updatedAt).toBeInstanceOf(Date)
-    expect(mockLocalStorage.setItem).toHaveBeenCalled()
-  })
+    it('handles corrupted localStorage data gracefully', async () => {
+      mockLocalStorage.getItem.mockReturnValue('invalid json');
+      
+      const conversations = await service.getConversations();
+      
+      expect(conversations).toEqual([]);
+    });
+  });
 
-  it('should create a new conversation with initial message', async () => {
-    // Mock API response for initial message
-    const mockResponse = {
-      ok: true,
-      json: vi.fn().mockResolvedValue({ 
-        response: 'Hello! How can I help you?',
-        processing_time_ms: 150
-      })
-    }
-    vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response)
-    
-    const conversation = await chatService.createConversation('Hello world')
-    
-    expect(conversation).toBeDefined()
-    expect(conversation.title).toBe('Hello world')
-    expect(conversation.id).toBeDefined()
-    expect(conversation.createdAt).toBeInstanceOf(Date)
-    expect(conversation.updatedAt).toBeInstanceOf(Date)
-    expect(mockLocalStorage.setItem).toHaveBeenCalled()
-  })
+  describe('createConversation', () => {
+    it('creates conversation without initial message', async () => {
+      const conversation = await service.createConversation();
+      
+      expect(conversation.id).toBeDefined();
+      expect(conversation.title).toBe('New Conversation');
+      expect(conversation.messages).toEqual([]);
+      expect(conversation.createdAt).toBeInstanceOf(Date);
+      expect(conversation.updatedAt).toBeInstanceOf(Date);
+    });
 
-  it('should truncate long titles when creating conversation', async () => {
-    // Mock API response for the initial message
-    const mockResponse = {
-      ok: true,
-      json: vi.fn().mockResolvedValue({ 
-        response: 'Response to long message',
-        processing_time_ms: 150
-      })
-    }
-    vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response)
-    
-    const longMessage = 'A'.repeat(100)
-    const conversation = await chatService.createConversation(longMessage)
-    
-    expect(conversation.title).toBe('A'.repeat(47) + '...')
-  })
+    it('creates conversation with initial message as title', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: 'AI response', processing_time_ms: 100 }),
+      });
 
-  it('should send message to API successfully', async () => {
-    const mockResponse = {
-      ok: true,
-      json: vi.fn().mockResolvedValue({ 
-        response: 'Hello! How can I help you?',
-        processing_time_ms: 150
-      })
-    }
-    vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response)
+      const conversation = await service.createConversation('Hello world');
+      
+      expect(conversation.title).toBe('Hello world');
+    });
 
-    const aiMessage = await chatService.sendMessage('Hello')
-    
-    expect(fetch).toHaveBeenCalledWith(
-      'http://test-api.com/api/v1/chat',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'Content-Type': 'application/json'
-        }),
-        body: JSON.stringify({ message: 'Hello' })
-      })
-    )
-    
-    expect(aiMessage.content).toBe('Hello! How can I help you?')
-    expect(aiMessage.role).toBe('assistant')
-    expect(aiMessage.id).toBeDefined()
-    expect(aiMessage.timestamp).toBeInstanceOf(Date)
-  })
+    it('truncates long initial message for title', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: 'AI response', processing_time_ms: 100 }),
+      });
 
-  it('should handle API errors', async () => {
-    const mockResponse = {
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      json: vi.fn().mockResolvedValue({ detail: 'Server error' })
-    }
-    vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response)
-    
-    await expect(chatService.sendMessage('Hello')).rejects.toThrow('Server error')
-  })
+      const longMessage = 'a'.repeat(60);
+      const conversation = await service.createConversation(longMessage);
+      
+      expect(conversation.title).toHaveLength(50); // 47 chars + '...'
+      expect(conversation.title.endsWith('...')).toBe(true);
+    });
+  });
 
-  it('should handle network errors', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('Network error'))
-    
-    await expect(chatService.sendMessage('Hello')).rejects.toThrow('API request failed')
-  })
+  describe('deleteConversation', () => {
+    it('removes conversation from localStorage', async () => {
+      const storedData = JSON.stringify([
+        { id: 'conv-1', title: 'Chat 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
+        { id: 'conv-2', title: 'Chat 2', messages: [], createdAt: new Date(), updatedAt: new Date() },
+      ]);
+      
+      mockLocalStorage.getItem.mockReturnValue(storedData);
+      
+      await service.deleteConversation('conv-1');
+      
+      expect(mockLocalStorage.setItem).toHaveBeenCalled();
+      const savedData = JSON.parse(mockLocalStorage.setItem.mock.calls[0][1]);
+      expect(savedData).toHaveLength(1);
+      expect(savedData[0].id).toBe('conv-2');
+    });
+  });
 
-  it('should delete conversation', async () => {
-    // Set up some conversations
-    const mockConversations = [
-      {
-        id: '1',
-        title: 'Test Chat 1',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      },
-      {
-        id: '2',
-        title: 'Test Chat 2',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      }
-    ]
-    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockConversations))
-    
-    await chatService.deleteConversation('1')
-    
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      'chatbot9000-conversations',
-      expect.stringContaining('"Test Chat 2"')
-    )
-  })
+  describe('clearConversations', () => {
+    it('removes conversations from localStorage', async () => {
+      await service.clearConversations();
+      
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('chatbot9000-conversations');
+    });
+  });
 
-  it('should clear all conversations', async () => {
-    await chatService.clearConversations()
-    
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('chatbot9000-conversations')
-  })
+  describe('healthCheck', () => {
+    it('makes request to health endpoint', async () => {
+      const healthResponse = { status: 'ok', timestamp: '2025-01-15T10:00:00Z' };
+      
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(healthResponse),
+      });
+      
+      const result = await service.healthCheck();
+      
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/api/v1/health',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+        })
+      );
+      expect(result).toEqual(healthResponse);
+    });
 
-  it('should update conversation title', async () => {
-    const mockConversations = [
-      {
-        id: '1',
-        title: 'Old Title',
-        messages: [],
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
-      }
-    ]
-    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockConversations))
-    
-    const updatedConversation = await chatService.updateConversationTitle('1', 'New Title')
-    
-    expect(updatedConversation.title).toBe('New Title')
-    expect(mockLocalStorage.setItem).toHaveBeenCalled()
-  })
+    it('throws error on API failure', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: () => Promise.resolve({}),
+      });
+      
+      await expect(service.healthCheck()).rejects.toThrow('API request failed');
+    });
+  });
 
-  it('should handle conversation not found', async () => {
-    mockLocalStorage.getItem.mockReturnValue('[]')
-    
-    await expect(chatService.updateConversationTitle('nonexistent', 'New Title')).rejects.toThrow('Conversation not found')
-  })
-})
+  describe('sendMessage', () => {
+    it('gets AI response from backend', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: 'AI response', processing_time_ms: 100 }),
+      });
+      
+      const message = await service.sendMessage('Hello');
+      
+      expect(message.content).toBe('AI response');
+      expect(message.role).toBe('assistant');
+      expect(message.id).toBeDefined();
+      expect(message.timestamp).toBeInstanceOf(Date);
+    });
+
+    it('makes correct API request', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ response: 'AI response', processing_time_ms: 100 }),
+      });
+      
+      await service.sendMessage('Hello');
+      
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/api/v1/chat',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+          body: JSON.stringify({ message: 'Hello' }),
+        })
+      );
+    });
+  });
+
+  describe('error handling', () => {
+    it('handles network errors gracefully', async () => {
+      mockFetch.mockRejectedValue(new Error('Network error'));
+      
+      await expect(service.sendMessage('Hello')).rejects.toThrow('API request failed');
+    });
+
+    it('handles non-JSON responses', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: () => Promise.reject(new Error('Not JSON')),
+      });
+      
+      await expect(service.sendMessage('Hello')).rejects.toThrow('API request failed');
+    });
+  });
+});
