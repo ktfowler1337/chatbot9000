@@ -136,7 +136,7 @@ chatbot9000/
 - Security headers (helmet middleware)
 ```
 
-## What are the performance concerns for your project, how will it scale in throughout, response times, and supported tasks?
+## What are the performance concerns for your project, how will it scale in throughput, response times, and supported tasks?
 
 ### Current Performance
 - Bundle Size: 606KB (192KB gzipped) - optimized with tree shaking
@@ -154,7 +154,7 @@ chatbot9000/
 
 #### Response Time Optimization
 - Current: 1-3s per AI response
-- Optimizations: 
+- Optimizations:
   - Streaming responses for immediate feedback
   - Response caching for similar queries
   - Optimistic UI updates
@@ -186,33 +186,33 @@ chatbot9000/
 ```typescript
 // Common issues and solutions
 1. API Key Missing: Check environment variables
-3. localStorage Full: Implement conversation cleanup
+2. localStorage Full: Implement conversation cleanup
 ```
 
 ## If you had more time, what would you do differently, and how would you expand the functionality?
 
-Admittedly I did quite a bit more than was asked.  This code needs a lot more reviewing and refactoring to cleanup what the AI (Claude Sonnet 4) generated.
+Admittedly, I did quite a bit more than was asked. This code needs a lot more reviewing and refactoring to clean up what the AI (Claude Sonnet 4) generated.
 The code itself is not up to my personal standards, but it is functional and a pretty cool POC overall. 
 
 ### Refactoring/TODOs I deem out of scope for now
-- Add playwright tests
-- decrease prop drilling as result of coupling of the large useConversationManager hook
-- leverage something like useLocalStorage from useHooks package, or something like that to decrease custom code on the persistence side
-- revisit unit tests, they are purely auto-generated right now.  Likely some oddities in there.
+- Add Playwright tests
+- Decrease prop drilling as a result of coupling of the large useConversationManager hook
+- Leverage something like useLocalStorage from useHooks package, or something like that to decrease custom code on the persistence side
+- Revisit unit tests, they are purely auto-generated right now. Likely some oddities in there.
 - Backend was auto-generated and has not been reviewed or modified. It "just works" right now, and since this is mostly a frontend showcase, I'm okay with that.
-- revisit error handling
+- Revisit error handling
 
 ### With More Time
-- Theme: Ability to swap light/darkmode
+- Theme: Ability to swap light/dark mode
 - Branding: Customized MUI theming or some other sort of design system
 - Internationalization: Allow the user to swap languages
-- Api Client: Use an auto-generated api client instead of custom queries
+- API Client: Use an auto-generated API client instead of custom queries
 - Component library: Build more shared components to increase code reusability
 - Authentication System: User accounts with cloud sync
 - Advanced AI: Multiple providers (OpenAI, Anthropic, local models)
 - Mobile Apps: React Native with shared business logic
 - Enterprise Features: SSO, audit logs, admin panel
-- Error reporting / tracking
+- Error reporting/tracking
 
 ### Architectural Improvements
 - Backend Database: PostgreSQL for persistent storage
